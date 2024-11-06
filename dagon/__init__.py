@@ -65,7 +65,7 @@ class Workflow(object):
 
     SCHEMA = "workflow://"
 
-    def __init__(self, name, config=None, config_file='dagon.ini', max_threads=10, jsonload=None, checkpoint_file=None):
+    def __init__(self, name, config=None, config_file='/home/giangiui/dagonstar/dagon.ini', max_threads=10, jsonload=None, checkpoint_file=None):
         """
         Create a workflow
 
@@ -279,13 +279,17 @@ class Workflow(object):
 
     def load_json(self, Json_data):
         from dagon.task import DagonTask, TaskType
-        self.name = Json_data['name']
-        self.workflow_id = Json_data['id']
-        for task in Json_data['tasks']:
-            temp = Json_data['tasks'][task]
+
+        with open(Json_data) as f: 
+            data = json.load(f)
+        
+        self.name = data['name']
+        self.workflow_id = data['id']
+        for task in data['tasks']:
+            temp = data['tasks'][task]
             tk = DagonTask(TaskType[temp['type'].upper()], temp['name'], temp['command'])
             self.add_task(tk)
-        # self.make_dependencies()
+        self.make_dependencies()
 
     def Validate_WF(self):
         """
