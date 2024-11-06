@@ -65,7 +65,7 @@ class Workflow(object):
 
     SCHEMA = "workflow://"
 
-    def __init__(self, name, config=None, config_file='/home/giangiui/dagonstar/dagon.ini', max_threads=10, jsonload=None, checkpoint_file=None):
+    def __init__(self, name, config=None, config_file='dagon.ini', max_threads=10, jsonload=None, checkpoint_file=None):
         """
         Create a workflow
 
