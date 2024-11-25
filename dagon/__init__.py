@@ -534,6 +534,8 @@ mode={}
 jobs={}
 partition={}
 
+job_ids=()
+
 for file in $src
 do
 cmd="{}"
@@ -545,7 +547,8 @@ case $mode in
     ;;
     2)
     # Run in parallel using slurm
-    srun --partition=$partition --ntasks=1 --cpus-per-task=1 $cmd &
+    job_id=$(sbatch --job-name=stagein --partition=$partition --ntasks=1 --cpus-per-task=1 --mem=1024 --wrap="$cmd" | awk '{{print $4}}')
+    job_ids+=($job_id)
     ;;
     *)
     # Run requentially
@@ -554,5 +557,17 @@ case $mode in
 esac
 done
 
-wait
-        """.format(src, dst, mode, self.cfg["batch"]["threads"], self.cfg["sulrm"]["partition"], cmd)
+# Wait for all sbatch jobs to complete
+if [ "${{#job_ids[@]}}" -gt 0 ]; then
+    echo "Waiting for all copies to complete..."
+    while true; do
+        # Check if any jobs are still in the queue
+        pending_jobs=$(squeue -j "${{job_ids[*]}}" -h -o '%A')
+        if [ -z "$pending_jobs" ]; then
+            break
+        fi
+        # Wait a few seconds before checking again
+        sleep 5
+    done
+fi
+        """.format(src, dst, mode, self.cfg["batch"]["threads"], self.cfg["slurm"]["partition"], cmd)

@@ -596,6 +596,7 @@ class Task(Thread):
                 if self.mode == "parallel":
                     files = glob.glob(task.get_scratch_dir() + "/" + local_path)
                     taskType = TaskType[type(self).__name__.upper()]
+                    new_tasks = []
 
                     for file in files:
                         filename, _ = path.splitext(path.basename(file))
@@ -638,7 +639,15 @@ class Task(Thread):
                                                       transversal_workflow=self.transversal_workflow)
                         
                         self.workflow.add_task(parallel_task)
+                        new_tasks.append(parallel_task)
 
+                    for next_task in self.nexts:
+                        if self in next_task.prevs:
+                            next_task.prevs.remove(self)
+
+                        for new_task in new_tasks:
+                            next_task.add_dependency_to(new_task)
+                    
                     self.workflow.make_dependencies()
 
                     body = "echo \"Starting parallel tasks...\"\n"
@@ -791,6 +800,9 @@ class Task(Thread):
 
             # Go to the next element
             pos = pos2
+    
+        if len(self.nexts) == 0 and self.remove_scratch_dir is True:
+            self.on_garbage()
 
     # Method execute
     def execute(self):
@@ -801,7 +813,7 @@ class Task(Thread):
         """
         key = self.workflow.name + "." + self.getName()
 
-        if key in self.workflow.checkpoints and self.workflow.checkpoints[key]["code"] == 0 and path.isdir(self.workflow.checkpoints[key]["working_dir"]):
+        if key in self.workflow.checkpoints and "code" in self.workflow.checkpoints[key] and self.workflow.checkpoints[key]["code"] == 0 and path.isdir(self.workflow.checkpoints[key]["working_dir"]):
             self.working_dir = self.workflow.checkpoints[key]["working_dir"]
 
             self.workflow.logger.debug("%s Already completed ---" % (self.name))
