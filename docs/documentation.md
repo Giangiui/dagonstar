@@ -810,3 +810,144 @@ if workflow.get_dry() is False:
 ```
 
 > task-sum-multiple-workflows.py
+
+
+
+## Checkpoint
+
+DAGonStar has an internal checkpoint system, but it also provides the possibility to declare an external checkpoint if you want to explicitly check the existence of the task's result file (and his correct execution).
+
+To declare an explicit checkpoint, you need to declare a task with `TaskType.CHECKPOINT`.
+
+```python
+taskCheck = DagonTask(TaskType.CHECKPOINT, "Checkpoint", "workflow:///Task_Name/output_file")
+```
+
+
+
+Now, to access to the checkpoint file, we need to use a path like `workflow:///Checkpoint/Workflow/Task/file.txt`.
+
+
+
+```python
+task = DagonTask(TaskType.BATCH, "Task", "cat workflow:///Svevo/Italian-Writers/Pirandello/file.txt >> output.txt")
+```
+
+In this example *Svevo* is the name of the checkpoint, *Italian-Writers* is the name of the workflow and *Pirandello* is the name of the task. 
+
+It is still possible to refer to the original output file of the task after the checkpoint execution.
+
+
+
+### task-checkpoint
+
+In this example, we declare a new C program called `output-random-file.c`. 
+
+This code generates a random number from 1 to 100 and saves it into a file called `output-file.txt`.
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main() {
+  FILE *fptr;
+
+  fptr = fopen("output-file.txt", "w");
+
+  srand(time(NULL));
+  int random_number = rand() % 100 + 1;
+  
+  if (fptr) {
+        fprintf(fptr, "%d", random_number);
+        fclose(fptr);
+    }
+
+  return 0;
+}
+```
+
+> output-random-file.c
+
+
+
+Declare a `pow2.py` script, which reads a number from a file and squares it.
+
+```python
+import sys
+import math
+
+x = open(sys.argv[1],'r')
+
+print(math.pow(int(x.read()), 2))
+```
+
+> pow2.py
+
+
+
+In `task-checkpoint.py` declare three tasks. 
+
+1. *Pirandello*: Compiles and runs `output-random-file.c`, which produces a file with a random number. 
+2. *Svevo:* An explicit checkpoint task that backs up `output-random-file.txt`, the result from `output-random-file.c` and saves it into an equivalent file.   
+3. *Calvino*: Takes the result file of *Pirandello* from the *Svevo* checkpoint and processes it with *pow2.py*.
+
+
+
+```python
+import json
+import time
+import os
+
+from dagon import Workflow
+from dagon.task import DagonTask, TaskType
+
+workflow = Workflow("Italian-Writers")
+
+taskA = DagonTask(TaskType.BATCH, "Pirandello", "gcc /path/to/file/output-random-file.c -o output-random-file; ./output-random-file")
+taskCheck = DagonTask(TaskType.CHECKPOINT, "Svevo", "workflow:///Pirandello/output-random-file.txt")
+taskB = DagonTask(TaskType.BATCH, "Calvino", "python3 /path/to/file/pow2.py workflow:///Svevo/Italian-Writers/Pirandello/output-random-file.txt > output.txt")
+
+workflow.add_task(taskA)
+workflow.add_task(taskCheck)
+workflow.add_task(taskB)
+
+taskCheck.add_dependency_to(taskA)
+taskB.add_dependency_to(taskCheck)
+
+workflow.run()
+
+if workflow.get_dry() is False:
+        # set the result filename
+        result_filenameA = taskA.get_scratch_dir() + "/output-random-file.txt"
+        while not os.path.exists(result_filenameA):
+            time.sleep(1)
+
+        # get the results
+        with open(result_filenameA, "r") as infile:
+            result = infile.readlines()
+            print(result)
+
+
+        result_filenameB = taskB.get_scratch_dir() + "/output.txt"
+        while not os.path.exists(result_filenameB):
+            time.sleep(1)
+       
+        # get the results
+        with open(result_filenameB, "r") as infile:
+            result = infile.readlines()
+            print(result)
+```
+
+> task-checkpoint.py
+
+
+
+```bash
+['8']
+['64.0\n']
+```
+
+> Results
+
