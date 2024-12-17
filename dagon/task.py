@@ -725,7 +725,10 @@ class Task(Thread):
             # Set a scratch directory as working directory
             self.working_dir = self.workflow.get_scratch_dir_base() + "/" + self.get_scratch_name()
             # Set to remove the scratch directory
-            self.remove_scratch_dir = eval(self.workflow.get_remove_scratch_dir())
+            try: 
+                self.remove_scratch_dir = eval(self.workflow.get_remove_scratch_dir()) 
+            except: 
+                self.remove_scratch_dir = True
 
         # Create scratch directory
         self.mkdir_working_dir(self.working_dir + "/.dagon")
