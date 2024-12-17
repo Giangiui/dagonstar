@@ -158,15 +158,15 @@ class Workflow(object):
         """
         return self.cfg['batch']['scratch_dir_base']
 
-    def get_remove_scratch_dir(self): 
+        def get_remove_dir(self): 
         """
-        Returns setting for remove_scratch_dir 
+        Returns setting for "remove_dir" parameter into dagon.ini file config  
 
         :return: True or False
         :rtype: str
 
         """
-        return self.cfg['batch']['remove_scratch_dir']
+        return self.cfg['batch']['remove_dir']
 
     def find_task_by_name(self, workflow_name, task_name):
         """
