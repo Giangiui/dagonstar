@@ -726,7 +726,7 @@ class Task(Thread):
             self.working_dir = self.workflow.get_scratch_dir_base() + "/" + self.get_scratch_name()
             # Set to remove the scratch directory
             try: 
-                self.remove_scratch_dir = eval(self.workflow.get_remove_scratch_dir()) 
+                self.remove_scratch_dir = eval(self.workflow.get_remove_dir()) 
             except: 
                 self.remove_scratch_dir = True
 
