@@ -158,7 +158,7 @@ class Workflow(object):
         """
         return self.cfg['batch']['scratch_dir_base']
 
-        def get_remove_dir(self): 
+    def get_remove_dir(self): 
         """
         Returns setting for "remove_dir" parameter into dagon.ini file config  
 
