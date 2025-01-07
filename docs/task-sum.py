@@ -9,7 +9,7 @@ workflow = Workflow("English-Writers-Taskflow")
 
 taskA = DagonTask(TaskType.BATCH, "Hemingway", "echo 10 > A.txt")
 taskB = DagonTask(TaskType.BATCH, "Shakespeare", "echo 7 > B.txt")
-taskC = DagonTask(TaskType.BATCH, "Orwell", "python3 /home/giangiui/dagonstar/documentation/task/sum.py workflow:///Hemingway/A.txt workflow:///Shakespeare/B.txt > C.txt")
+taskC = DagonTask(TaskType.BATCH, "Orwell", "python3 /path/to/folder/sum.py workflow:///Hemingway/A.txt workflow:///Shakespeare/B.txt > C.txt")
 
 workflow.add_task(taskA)
 workflow.add_task(taskB)
