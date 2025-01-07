@@ -14,11 +14,11 @@ workflow.set_dry(False)
 
 taskA = DagonTask(TaskType.BATCH, "Hemingway", "echo 10 > A.txt")
 taskB = DagonTask(TaskType.BATCH, "Shakespeare", "echo 7 > B.txt")
-taskC = DagonTask(TaskType.BATCH, "Orwell", "python3 /home/giangiui/dagonstar/documentation/task/sum_from_file.py workflow:///Hemingway/A.txt workflow:///Shakespeare/B.txt > C.txt")
+taskC = DagonTask(TaskType.BATCH, "Orwell", "python3 /path/to/folder/sum_from_file.py workflow:///Hemingway/A.txt workflow:///Shakespeare/B.txt > C.txt")
 
-taskD = DagonTask(TaskType.BATCH, "Dante", "gcc /home/giangiui/dagonstar/examples/dataflow/batch/random_number.c -o random_number; ./random_number > D.txt")
+taskD = DagonTask(TaskType.BATCH, "Dante", "gcc /path/to/folder/random_number.c -o random_number; ./random_number > D.txt")
 
-taskE = DagonTask(TaskType.BATCH, "Perec", "rustc /home/giangiui/dagonstar/examples/dataflow/batch/sum_rust.rc; ./sum_rust workflow://English-Writers/Orwell/C.txt workflow://Italian-Writers/Dante/D.txt > E.txt")
+taskE = DagonTask(TaskType.BATCH, "Perec", "rustc /path/to/folder/sum_rust.rc; ./sum_rust workflow://English-Writers/Orwell/C.txt workflow://Italian-Writers/Dante/D.txt > E.txt")
 
 workflow.add_task(taskA)
 workflow.add_task(taskB)
