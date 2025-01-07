@@ -951,3 +951,106 @@ if workflow.get_dry() is False:
 
 > Results
 
+
+
+## Transversal Workflow
+
+Dagon has the property of transversality, allowing you to create dependencies in workflows on existing workflows, whether they are currently executing or have already ended. This property also allows you to build workflows from workflows for joint execution.
+
+
+
+### DagOnService 
+
+To use the transversality property of DagOnStar, it is necessary to use [DagOnService](https://github.com/DagOnStar/DagOnService/).
+
+DagOnService is an advanced solution for workflow registration and remote monitoring, designed to operate on Docker. To utilize this service, it needs to be run within a Docker container using Docker-compose.
+
+To run the service, execute the following command in the root folder:
+
+```bash
+docker-compose up --build 
+```
+
+
+
+After executing the launch command, you can verify the status of the code by using the check command: 
+
+```bash
+http://localhost:57000/check
+```
+
+```bash
+{
+    "status": "ok"
+}
+```
+
+
+
+Using the list command, you can view all workflows that have been executed and registered within DagOnService:
+
+```bash
+http://localhost:57000/list
+```
+
+```json
+[
+    {
+        "creation_at": "2025-01-07 10:42:33",
+        "host": "localhost",
+        "id": "677d051947f7f78657b0582a",
+        "name": "English-Writers-Taskflow",
+        "subscribers": [],
+        "tasks": {
+            "Hemingway": {
+                "command": "/bin/hostname",
+                "history": [
+                    {
+                        "datetime": "2025-01-07 10:42:33",
+                        "status": "READY"
+                    }
+                ],
+                "name": "Hemingway",
+                "nexts": [],
+                "prevs": [],
+                "status": "FINISHED",
+                "type": "batch",
+                "working_dir": "/tmp//1736246553737-Hemingway"
+            },
+            "Shakespeare": {
+                "command": "/bin/date",
+                "history": [
+                    {
+                        "datetime": "2025-01-07 10:42:33",
+                        "status": "READY"
+                    }
+                ],
+                "name": "Shakespeare",
+                "nexts": [],
+                "prevs": [],
+                "status": "FINISHED",
+                "type": "batch",
+                "working_dir": "/tmp//1736246553737-Shakespeare"
+            }
+        }
+    }
+]
+```
+
+> Results from the list command following the execution of task-demo.py
+
+
+
+To view the tasks of a specific workflow, you can use the address service command followed by the workflow ID.
+
+```bash
+http://localhost:57000/<workflow_id>
+```
+
+
+
+To remove an entire workflow from DagOnService, simply use the delete command followed by the workflow ID.
+
+```bash
+http://localhost:57000/delete/<workflow_id>
+```
