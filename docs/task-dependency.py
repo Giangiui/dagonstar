@@ -3,7 +3,7 @@ from dagon.task import TaskType, DagonTask
 
 workflow = Workflow("Taskflow-Demo")
 
-taskA = DagonTask(TaskType.BATCH, "Hemingway", "/bin/hostnamee")
+taskA = DagonTask(TaskType.BATCH, "Hemingway", "/bin/hostname")
 taskB = DagonTask(TaskType.BATCH, "Shakespeare", "/bin/date")
 
 workflow.add_task(taskA)
