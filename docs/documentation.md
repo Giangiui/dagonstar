@@ -959,7 +959,7 @@ Dagon has the property of transversality, allowing you to create dependencies in
 
 
 
-### DagOnService 
+### Requirements
 
 To use the transversality property of DagOnStar, it is necessary to use [DagOnService](https://github.com/DagOnStar/DagOnService/).
 
@@ -986,6 +986,89 @@ http://localhost:57000/check
 ```
 
 
+
+### dagon.ini
+
+The `dagon.ini` file serves as the primary configuration file for DagOnStar.
+
+
+
+To utilize DagOnService, open the `dagon.ini` file and, in the dagon_service section, enter the IP address (or DNS name) of the host computer where the DagOn service is running and set the use parameter to True.
+
+```ini
+[dagon_service]
+route = http://localhost:57000
+use = True 
+
+[ftp_pub]
+ip = localhost
+
+[dagon_ip]
+ip = localhost
+
+[batch]
+scratch_dir_base=/tmp/
+remove_dir=False
+threads=1
+
+[slurm]
+partition=
+
+[ec2]
+key=AKIAJHPEAY3YIIDMG2NQ
+secret=
+region=
+
+[digitalocean]
+key=
+
+[gce]
+key=
+secret=
+project=
+
+[loggers]
+keys=root
+
+[handlers]
+keys=stream_handler
+
+[formatters]
+keys=formatter
+
+[logger_root]
+level=DEBUG
+handlers=stream_handler
+
+[handler_stream_handler]
+class=StreamHandler
+level=DEBUG
+formatter=formatter
+args=(sys.stderr,)
+
+[formatter_formatter]
+format=%(asctime)s %(name)-12s %(levelname)-8s %(message)s
+```
+
+
+
+If DagOnService and `dagon.ini` configured properly, there should be a workflow registration message before a workflow is executed.
+
+```shell
+2025-01-07 11:42:33,703 root         DEBUG    Workflow registration success id = 677d051947f7f78657b0582a
+```
+
+
+
+It's recommended to set `remove_dir`, under batch section, to `False`. 
+
+If preferred, you can change the default `scratch_dir_base` to another directory, such as `/home/$USER/DagOnStar/tmp/`. This is the directory where all the results will be stored.
+
+
+
+### DagOnService 
+
+DagOnService offers multiple commands that allow you to view, manage, and delete workflows.
 
 Using the list command, you can view all workflows that have been executed and registered within DagOnService:
 
@@ -1054,3 +1137,135 @@ To remove an entire workflow from DagOnService, simply use the delete command fo
 ```bash
 http://localhost:57000/delete/<workflow_id>
 ```
+
+
+
+### Asynchronous dependency
+
+Once everything is set up correctly, you can take advantage of DagOnStar's transversality.
+
+With DagOnService, you can initiate a workflow and, upon its completion, start another workflow that requires data from the previous one.
+
+
+
+#### WF-pow.py
+
+`WF1-pow.py` obtain a number and produce it as output.
+
+```python
+import json
+import time
+import os
+
+from dagon import Workflow
+from dagon.task import DagonTask, TaskType
+
+# Create Workflow
+workflowI = Workflow("Italian-Writers")
+
+# Set the dry
+workflowI.set_dry(False)
+
+# Declare taskA
+taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1.txt")
+
+#Add task to WorkflowI
+workflowI.add_task(taskA)
+
+workflowI.make_dependencies()
+
+workflowI.run()
+```
+
+> WF1-pow.py
+
+
+
+`Italian-Writers` is registered in the DagOnService and can be consulted by other workflows. To test this, we can run a second workflow with a dependency on the first.
+
+`WF2-pow.py` take the output number from `WF1-pow.py` as input and raise it to a power.
+
+```python
+import json
+import time
+import os
+
+from dagon import Workflow
+from dagon.task import DagonTask, TaskType
+
+# Create the orchestration workflow
+workflowE = Workflow("English-Writers")
+
+# Set the dry
+workflowE.set_dry(False)
+    
+taskB = DagonTask(TaskType.BATCH, "Woolf", "python3 /path/to/file/pow2.py workflow://Italian-Writers/Pirandello/output/f1.txt >> f2.txt")
+
+workflowE.add_task(task)
+
+workflowE.make_dependencies()
+
+workflowE.run()
+    
+if workflowE.get_dry() is False:
+    # set the result filename
+    result_filename = taskB.get_scratch_dir() + "/f2.txt"
+    while not os.path.exists(result_filename):
+        time.sleep(1)
+
+    # get the results
+    with open(result_filename, "r") as infile:
+        result = infile.readlines()
+        print(result)
+
+```
+
+> WF2-pow.py
+
+
+
+It's mandatory, in the workflow that have requirements from another workflow, use the instruction `make_dependencies()`.
+
+
+
+#### Run-time dependency 
+
+In the previous example, `WF1-pow.py` and `WF2-pow.py` run asynchronously, but with DagOnService support, a workflow can retrieve a task from another workflow at runtime and wait for it to complete.
+
+In the `WF1-pow.py` example above, add a pause to the Pirandello task declaration. With this change, the Pirandello task will complete its execution after about 30 seconds.
+
+```python
+taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1.txt; sleep 30")	
+```
+
+
+
+While the previous workflow is still running, run the ``WF2-pow.py`` file.
+
+Woolf task that has dependency from Pirandello task in WF1-, waiting for its completion.
+
+```python
+2025-01-16 10:27:00,856 root         DEBUG    Woolf: Status.WAITING
+```
+
+
+
+Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `WF2-pow-wait.py` workflow will continue its execution.
+
+```bash
+2025-01-16 10:27:06,875 root         DEBUG    Pirandello Completed in 31.989572048187256 seconds ---
+2025-01-16 10:27:08,878 root         DEBUG    Pirandello: Status.FINISHED
+2025-01-16 10:27:08,886 root         INFO     Workflow 'Italian-Writers' completed in 34.78531789779663 seconds ---
+```
+
+> WF1-pow.py ending status
+
+
+
+```bash
+2025-01-16 10:27:09,582 root         DEBUG    Woolf Completed in 0.031539201736450195 seconds ---
+2025-01-16 10:27:11,583 root         DEBUG    Woolf: Status.FINISHED
+2025-01-16 10:27:11,590 root         INFO     Workflow 'English-Writers' completed in 30.706148386001587 seconds --- 
+```
+
+> WF2-pow.py ending status
