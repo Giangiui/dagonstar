@@ -69,7 +69,7 @@ class DockerTask(Batch):
         """
 
         body = super(DockerTask, self).include_command(body)
-        body = "cd " + self.working_dir + ";" + body
+        body = "mkdir " + self.working_dir + ";" + "mkdir " + self.working_dir + "/.dagon" + ";" + "cd " + self.working_dir + ";" + body
         body = self.container.exec_in_cont(body) + "\n"
         return body
 
