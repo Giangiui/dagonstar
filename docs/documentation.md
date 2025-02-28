@@ -1,5 +1,9 @@
 # Data
 
+virtualenv venv
+. venv/bin/activate
+pip install -r requirements.txt
+export PYTHONPATH=$PWD:$PYTHONPATH
 
 
 
@@ -290,7 +294,7 @@ In fact, by running the code, we would obtain this result.
 
 ## SCHEMA
 
-in `\_init\_.py` file there is a SCHEMA variable. 
+in `_init_.py` file there is a SCHEMA variable. 
 
 ```python
  SCHEMA = "workflow://"
@@ -817,7 +821,7 @@ if workflow.get_dry() is False:
 
 DAGonStar has an internal checkpoint system, but it also provides the possibility to declare an external checkpoint if you want to explicitly check the existence of the task's result file (and his correct execution).
 
-To declare an explicit checkpoint, you need to declare a task with `TaskType.CHECKPOINT`.
+To declare an explicit checkpoint, you must declare with `TaskType.CHECKPOINT`.
 
 ```python
 taskCheck = DagonTask(TaskType.CHECKPOINT, "Checkpoint", "workflow:///Task_Name/output_file")
@@ -1269,3 +1273,292 @@ Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `
 ```
 
 > WF2-pow.py ending status
+
+
+
+## Connection
+
+Dagonstar gives the ability to perform tasks on a remote machine using different technologies. 
+
+//
+
+
+
+
+
+### SSH 
+
+//
+
+#### Pre-configuration
+
+1. **Create an SSH key pair**
+
+   To get started, you need to generate an SSH key pair on your local machine. Open a terminal and run the following command:
+
+   ```bash
+   ssh-keygen -t rsa -b 2048
+   ```
+
+   This will generate a public key (usually called `id_rsa.pub`) and a private key (usually called `id_rsa`) in the `~/.ssh` directory.
+
+   
+
+2. **Copy the Public Key to the Server**
+   Now you'll need to copy the public key to the server you want to access. You can use the `ssh-copy-id` command to do this. Replace `username` and `server_ip` with your own:
+
+   ```bash
+   ssh-copy-id username@server_ip
+   ```
+
+   This command will prompt you for the server password and then copy your public key to the server's `~/.ssh/authorized_keys` file.
+
+   
+
+3. **Test the Key-Based Authentication**
+   Try to SSH into the server without a password to test if the key-based authentication is working:
+
+   ```bash
+   ssh username@server_ip
+   ```
+
+   If everything is set up correctly, you should be able to log in without entering a password.
+
+   Now you have successfully set up SSH access to your server without a password, using a key pair for authentication. Make sure to keep your private key safe on your local machine, and don't share it with anyone.
+
+   
+
+#### SSH Task
+
+After preconfiguration, you can add a task to the workflow that can access the remote machine. 
+
+To do this you can add a task like this:
+
+```python
+taskA = DagonTask(TaskType.BATCH, "A", "mkdir output;hostname > output/f1.txt", ip="", ssh_username="", keypath="")
+```
+
+
+
+After declaring the instructions add a three new parameters: `ip` is the ip of the server, `ssh_username` is the username with which to access the server and `keypath` is the *id_rsa* previously generated. 
+
+
+
+> [!WARNING]
+> By now, the stager only supports the movement of data between remote machines or from a remote machine to a local machine. We are working on enable the stage in of data from a remote machine to a local machine.
+
+
+
+### Cloud Task
+
+
+DagOnStar supports the deployments on the following Cloud Providers:
+
+
+* Google Cloud
+* Amazon EC2
+* DigitalOcean
+
+
+
+
+#### Pre-configuration
+
+Depending on the cloud provider, different access tokens and keys may be required. Please refer to the provider's documentation to obtain the access tokens. 
+
+For example, to work with EC2 you need a temporary key and a secret token. These keys have to be added to the `dagon.ini` as follows:
+
+
+```conf
+[ec2]
+key=<my_key>
+secret=<my_secret>
+region=<ec2_region>
+```
+
+
+
+#### EC2 task
+
+The ``dataflow-demo-cloud.py`` file executes a workflow composed of two tasks deployed on two virtual machines on EC2. 
+
+The properties of the EC2 instances are configured using a dictionary, as follows:
+
+
+```python
+ec2_flavour = {"image": "ami-0fc5d935ebf8bc3bc", "size": "t1.micro"}
+```
+
+
+
+The ```image``` value is the ID of a valid Amazon Machine Image. To find the ID of an AMI, simply go to the AWS console and browse the AMI Catalog. 
+
+The ID of the image is available under the name of the AMI.
+
+
+The ```size``` value refers to the instance type of your virtual machine. A complete list of instance types can be found at  [https://aws.amazon.com/ec2/instance-types/](https://aws.amazon.com/ec2/instance-types/).
+
+
+Next, we need to specify the SSH parameters to enable the communication between the DagOnStar engine and the virtual machines. You can create a new SSH key or choose an existing one, previously loaded on the platform of your cloud provider's platform.
+
+To create a new key, declare a dictionary as follows:
+
+
+```python
+ssh_key_ec2 = {"option": cm.KeyOptions.CREATE, "key_path": "/path/to/store/key.pem", "cloud_args": {"name": "test-key2"}}
+```
+
+
+
+Note, that depending on the cloud provider, the parameters can be different. On Google Cloud and EC2, you must create the public and private keys, and then add them to the parameters of the dictionary. For example:
+
+
+```python
+keyPair = KeyPair.generate_RSA()
+
+
+googleKeyParams = {"keypath": "/path/to/store/key.pem", "username": "dagon", "public_key": keyPair[1],
+"private_key": keyPair[0]}
+digitalOceanKeyParams = {"option": KeyOptions.CREATE, "keypath": "/path/to/store/key.pem",
+"cloudargs": {"name": "dagon", "public_key": keyPair[1], "private_key": keyPair[0]}}
+```
+
+
+
+To use an existing key already added to EC2, you must declare a dictionary as follows:
+
+
+```python
+ssh_key_ec2_taskA = {"option": cm.KeyOptions.GET, "key_path": "/path/to/key.pem", "cloud_args": {"name": "dagon_services"}}
+```
+
+Then, you must declare the DagOnStar tasks using ```TaskType.CLOUD``` and pass the argument the ```instance flavour``` and ```key configuration``` dictionaries as arguments. 
+
+
+
+You must also specify the provider and name of the instance must be indicated, as follows:
+
+
+```python
+taskA = DagonTask(TaskType.CLOUD, "A", "mkdir output;echo I am A > output/f1.txt", Provider.EC2, "ubuntu", ssh_key_ec2_taskA, instance_flavour=ec2_flavour, instance_name="dagonTaskA", stop_instance=True)
+```
+
+
+
+`dataflow-demo-cloud.py` have 2 tasks, `taskA` and `taskB`. During the execution of the script, two instances will be created on EC2. Note that these instances will be created using the default security group. You must configure it to enable access through SSH, which is the protocol used by DagOnStar to execute remote tasks.
+
+
+> [!WARNING]
+> We are working on a bug preventing DagOnStar from stopping instances. Please, remember to manually stop or terminate your instances after retrieving your data.
+
+
+> [!WARNING]
+> Data are not automatically downloaded to the DagOnStart main host. Please, remember to retrieve your data after the execution of the workflow is completed.
+
+
+
+
+### Slurm
+
+DagOnStar supports task deployment through SLURM, an open source cluster resource management and job scheduling system.
+
+
+
+#### Pre-configuration
+
+- [SLURM](https://slurm.schedmd.com/documentation.html)
+
+To use a SLURM-based task on a remote server, configure SSH access in a similar way to SSH pre-configuration.
+
+
+
+#### SLURM Task
+
+To declare a local SLURM task, you must declare with `TaskType.SLURM`.
+
+For each task, specify the SLURM partition on which the task is running, the number of tasks used in the execution if you want to run in parallel, and the memory tasks used according to the machine specs and `slurm.conf`.
+
+```python
+taskA = DagonTask(TaskType.SLURM, "A", "mkdir output; hostname > output/f1.txt", partition="long", ntasks=1, memory=8192)
+```
+
+
+
+#### SLURM-Remote Task
+
+After the pre-configuration, a SLURM-remote task can be declared. For each task, specify the IP and username of the remote machine and the SLURM partition where the tasks will run, along with the other parameters that can also be set with local tasks. 
+
+```python
+taskA = DagonTask(TaskType.SLURM, "A", "mkdir output; hostname > output/f1.txt", partition="long", ntasks=1, memory=8192, ip="", ssh_username="")
+```
+
+
+
+### Docker
+
+DagOnStar supports task deployment through Docker, a platform designed to help developers build, share, and run container applications. 
+
+
+
+#### Pre-configuration
+
+-  [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
+
+
+
+To correctly run a task in a container, you first need to configure the base image with all the necessary dependencies for the task. Additionally, you must declare `workflow.set_dry("False")` in the code to ensure the proper execution of the task.
+
+To use a Docker-based task on a remote server, configure SSH access in a similar way to SSH pre-configuration.
+
+
+
+#### Docker Task
+
+To declare a local Docker task, you must declare with `TaskType.DOCKER`.
+
+Docker tasks can be run on new containers or on previously deployed containers. 
+
+
+
+To run a task on a new container, you must define the task as follows:
+
+```python
+taskA = DagonTask(TaskType.DOCKER, "A", "echo $RANDOM > output.txt", image="ubuntu:24.04")
+```
+
+The Image option allows you to specify a base image on which to run the task. 
+
+You can check the installed images present in Docker using the command `docker image ls`.
+
+
+
+To run a task on an existing container, you must define the task as follows:
+
+```python
+taskA = DagonTask(TaskType.DOCKER, "A", "echo $RANDOM > output.txt", container_id="9eb6414f7e52")
+```
+
+
+
+You need to provide the ID of your container. You can obtain it by running the `docker ps` command in a terminal to see the IDs of the running containers. Containers must be running at the time of task execution.
+
+In the task declaration you can declare a `remove` option. With this option, when the execution of the task is complete and it has no more references,the container is removed from the garbage collector. If you don't want this option, add a `remove=False` parameter to task. 
+
+
+
+> [!NOTE]
+> By default, each containers is deployed with a volume to the scratch directory of the tasks. So, you can access this directory to see the results of a task.
+
+> [WARNING]
+> We are working on a bug that prevents DagOnStar from allowing communication between tasks, preventing the exchange of files. 
+
+
+
+#### Docker-Remote Task
+
+After the pre-configuration, a SLURM-remote task can be declared. For each task, specify the IP and username of the remote machine and the SLURM partition where the tasks will run, along with the other parameters that can also be set with local tasks. 
+
+```python
+taskA = DagonTask(TaskType.DOCKER, "A", "echo $RANDOM > output.txt", image="ubuntu:latest", ip="", ssh_username="")
+```
+
