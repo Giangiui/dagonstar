@@ -31,6 +31,5 @@ def read_config(file_config="dagon.ini", section=None):
         for section in config.sections():
             dictionary[section] = {}
             for option in config.options(section):
-                # print option
                 dictionary[section][option] = config.get(section, option, raw=True)
         return dictionary
