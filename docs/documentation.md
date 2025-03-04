@@ -1,18 +1,91 @@
-# Data
+# DAGonStar
 
+DAGonStar (Direct acyclic graph On anything) is a lightweight Python library implementing a workflow engine able to execute parallel jobs represented by direct acyclic graphs on any combination of local machines, on-premise high-performance computing clusters, containers, and cloud-based virtual infrastructures.
+
+
+
+## Installation
+
+Before you begin, make sure you have the following tools installed on your system:
+
+- Git;
+- Python 3.x;
+- virtualenv (you can install it with pip install virtualenv).
+
+
+
+To install DAGonStar, follow the steps below:
+
+1. Clone repository and navigate to the project directory.
+
+```bash
+git clone https://github.com/DagOnStar/dagonstar.git
+cd dagonstar
+```
+
+
+
+2. Create and activate a virtual environment.
+
+```bash
 virtualenv venv
 . venv/bin/activate
+```
+
+You’ll see the virtual environment name (venv) at the beginning of the command line, indicating that the environment is active.
+
+
+
+3. Install the dependencies. 
+
+```bash
 pip install -r requirements.txt
+```
+
+This command installs all the dependencies listed in the requirements.txt file in the virtual environment.
+
+
+
+4. Configure the PYTHONPATH.
+
+```bash
 export PYTHONPATH=$PWD:$PYTHONPATH
+```
+
+This command sets the `PYTHONPATH` environment variable to include the current directory, allowing Python to find the project's modules.
 
 
 
+To run the example code you need to copy the configuration file in the examples directory.
 
-## Task
+```bash
+cp dagon.ini.sample examples/dagon.ini 
+cd examples
+```
+
+
+
+You can then edit the `.ini` file to suit the configuration of your system.
+
+
+
+### Troubleshooting
+
+On some MacOS installations, `pycrypto` fails to install automatically. This is usually due to a missing `gmp` library in the default include and library path. 
+
+Before running the requirements install, find the location of the missing library, then export the `CFLAGS` as in the example below (the actual path may be different):
+
+```bash
+export "CFLAGS=-I/usr/local/Cellar/gmp/6.2.1_1/include -L/usr/local/Cellar/gmp/6.2.1_1/lib"
+```
+
+
+
+## Taskflow
 
 DAGonStar can execute multiple tasks simultaneously and define dependencies between tasks.
 
-As a first example, let's define a simple Python code that executes two simple tasks. These tasks launch two bash commands.
+As a first example, let's define a simple Python code that runs two simple tasks. These tasks execute two bash commands.
 
 ```python
 from dagon import Workflow
@@ -29,11 +102,11 @@ workflow.add_task(taskB)
 workflow.run()
 ```
 
-> task-demo.py
+> taskflow-demo.py
 
 
 
-As can be seen above, to create a new code with DAGonStar, it is mandatory to import this library. 
+As shown above, the import of this library is essential for the creation of new code with DAGonStar.
 
 ```python
 from dagon import Workflow
@@ -42,41 +115,39 @@ from dagon.task import TaskType, DagonTask
 
 
 
-For correct execution of the code, it is necessary to define a Workflow. 
+To ensure the correct execution of the code, it is necessary to define a workflow.
 
 ```python
 workflow = Workflow("English-Writers")
 ```
 
-A Workflow for DAGonStar represents a directed acyclic graph and a set of tasks that must be executed simultaneously.
+A workflow in DAGonStar represents a directed acyclic graph and a collection of tasks to be executed simultaneously.
 
 
 
-Now can define tasks. In this example define tasks *Hemingway* and *Shakespeare*, which execute two commands. 
+Tasks can now be defined. In this example, we define the `Hemingway` and `Shakespeare` tasks, which run two commands. 
 
 ```python
 taskA = DagonTask(TaskType.BATCH, "Hemingway", "/bin/hostname")
 taskB = DagonTask(TaskType.BATCH, "Shakespeare", "/bin/date")
 ```
 
-For this example tasks has batch type. With this definition can execute regular bash commands, for example `/bin/hostname` and `/bin/date`
+In this example, the tasks are of the batch type. With this definition, they can run standard bash commands such as `/bin/hostname` and `/bin/date`.
 
 
 
-After definition of workflow and tasks can launch add_task for every definition of tasks, for insert them into specific workflow.
+Once the workflow and tasks have been defined, you can use `add_task` for each task definition to add it to the specific workflow.
 
 ```python
 workflow.add_task(taskA)
 workflow.add_task(taskB)
 ```
 
-
-
-For DAGonStar a single task representing a vertices of the graph. 
+In DAGonStar, a single task represents a vertex of the graph.
 
 
 
-Workflow is correctly configured, now with command `.run()` can execute all the tasks into them.
+The workflow is now properly configured and you can use the .run() command to execute all the tasks within it.
 
 ```python
 workflow.run()
@@ -84,7 +155,7 @@ workflow.run()
 
 
 
-This is the results of the execution. 
+This is the result of the execution. 
 
 ```bash
 2024-10-23 10:36:59,001 root         INFO     Workflow 'English-Writers' completed in 2.8947041034698486 seconds ---
@@ -94,7 +165,7 @@ This is the results of the execution.
 
 ## Dry 
 
-If you want more information about execution of every single code you can set dry variable.
+If you want more information about the execution of each task, you can set `dry` variable.
 
 ```python
 workflow.set_dry(False)
@@ -102,25 +173,24 @@ workflow.set_dry(False)
 
 
 
-`set_dry(False)` return execution time or exception to every single code run into workflow.
+Declaring `set_dry(False)` before executing the workflow ensures that the execution time or any exceptions are returned for each individual task executed in the workflow.
 
 ```bash
 2024-10-29 09:50:42,200 root         DEBUG    Hemingway Completed in 0.003662109375 seconds ---
-DRY
 2024-10-29 09:50:42,544 root         DEBUG    Shakespeare Completed in 0.00331878662109375 seconds ---
 ```
 
  
 
-For default dry variable is set to False. 
+By default, `dry` variable is set to `False`. 
 
 
 
 ## Dependency
 
-With this example you can see a simple tasks workflow. However, with this configuration, the tasks run independently of each other. 
+The previous example shows a simple workflow of tasks. However, with this configuration the tasks run independently of each other.
 
-To enforce dependency between tasks, you can use the command `add_dependency_to()`. 
+To set dependencies between tasks, you can use the `add_dependency_to()` command.
 
 ```python
 taskB.add_dependency_to(taskA)
@@ -128,9 +198,9 @@ taskB.add_dependency_to(taskA)
 
 
 
-With this command, taskB strictly depends on taskA and its execution. Until taskA finishes running, taskB will not start and its status will remain 'waiting'.
+Using this command, `taskB` becomes strictly dependent on the execution of `taskA`. `taskB` will not begin until `taskA` has completed, and its status will remain as waiting.
 
-In graph terms this command defines an edge, creating a link between two vertices.
+In graph terms, this command defines an edge, establishing a connection between two vertices.
 
 ```python
 from dagon import Workflow
@@ -149,11 +219,11 @@ taskB.add_dependency_to(taskA)
 workflow.run()
 ```
 
-> task-dependency.py
+> taskflow-dependency.py
 
 
 
-Shakespeare's task is waiting the end of execution of the Hemingway's task. If Shakespeare's task ends correctly, Hemingway's task begins.
+*Shakespeare*'s task waits for the completion of *Hemingway*'s task. If *Hemingway*'s task finishes, *Shakespeare*'s task will begin.
 
 ```bash
 2024-10-31 09:29:31,386 root         DEBUG    Running workflow: English-Writers
@@ -162,13 +232,11 @@ Shakespeare's task is waiting the end of execution of the Hemingway's task. If S
 2024-10-31 09:29:31,393 root         DEBUG    Hemingway: Executing...
 2024-10-31 09:29:31,393 root         DEBUG    Shakespeare: Status.WAITING
 2024-10-31 09:29:31,394 root         DEBUG    Hemingway: Scratch directory: /tmp//1730363371394-Hemingway
-DRY
 2024-10-31 09:29:32,288 root         DEBUG    Hemingway Completed in 0.006635427474975586 seconds ---
 2024-10-31 09:29:34,291 root         DEBUG    Hemingway: Status.FINISHED
 2024-10-31 09:29:34,291 root         DEBUG    Shakespeare: Status.RUNNING
 2024-10-31 09:29:34,291 root         DEBUG    Shakespeare: Executing...
 2024-10-31 09:29:34,292 root         DEBUG    Shakespeare: Scratch directory: /tmp//1730363374292-Shakespeare
-DRY
 2024-10-31 09:29:34,737 root         DEBUG    Shakespeare Completed in 0.003768444061279297 seconds ---
 2024-10-31 09:29:36,739 root         DEBUG    Shakespeare: Status.FINISHED
 2024-10-31 09:29:36,739 root         INFO     Workflow 'English-Writers' completed in 5.353054523468018 seconds ---
@@ -176,17 +244,17 @@ DRY
 
 
 
-DAGonStar doesn't check for the existence of a task's necessary dependencies and doesn't stop the execution if tasks don't have the necessary data for correct execution. It is necessary to verify the correct execution of tasks and the presence of dependencies before launching the code.
+> [!WARNING]
+>
+> DAGonStar does not check whether the necessary dependencies of a task are present, nor does it stop execution if tasks lack the necessary data for proper execution. Therefore, it is essential to ensure that all necessary dependencies are in place before executing the code.
 
 
 
 ## Loop
 
-In the previous chapter we can see the `add_dependency_to` command and how it works. 
+In the previous chapter we explored the `add_dependency_to` command and its functionality.
 
-Expand the previous example and introduce a new task and new dependencies.
-
-
+Now let's build on the previous example by introducing a new task and creating additional dependencies.
 
 ```python
 from dagon import Workflow
@@ -220,21 +288,19 @@ This is the result of the execution.
 2024-10-29 10:37:23,934 root         DEBUG    Orwell: Status.WAITING
 ```
 
-In this particularly case //
+In this particular case, *Hemingway*, *Shakespeare* and *Orwell* are stuck and unable to complete their executions because they are interdependent. There is a loop.
 
 
 
-
-
-To solve the problem we can use the `make_dependencies()` command. 
+`make_dependencies()` command can detect loops in the graph and either resolve them or report their occurrence.
 
 ```python
 workflow.make_dependencies()
 ```
 
-This command can individuate graph's loop and resolve or report them. 
 
-By adding this command to the previous example code, we achieve loop resolution and ensure the correct execution of tasks within the workflow.
+
+Adding this command to the previous sample code eliminates loops and ensures the correct execution of tasks within the workflow.
 
 ```python
 from dagon import Workflow
@@ -262,11 +328,11 @@ workflow.make_dependencies()
 workflow.run()
 ```
 
-> task-loop.py
+> taskflow-loop.py
 
 
 
-In fact, by running the code, we would obtain this result.
+In fact, if we ran the code, we would get this result.
 
 ```bash
 2024-10-29 11:17:03,747 root         DEBUG    Running workflow: English-Writers
@@ -290,17 +356,15 @@ In fact, by running the code, we would obtain this result.
 
 
 
+## SCHEMA and DataFlow
 
-
-## SCHEMA
-
-in `_init_.py` file there is a SCHEMA variable. 
+There is a SCHEMA variable in `_init_.py` file.
 
 ```python
  SCHEMA = "workflow://"
 ```
 
-This variable define a space that tasks can use to save data and communicate for each other. 
+This variable defines a space that tasks can use to store data and communicate with each other. 
 
 
 
@@ -325,17 +389,15 @@ taskB.add_dependency_to(taskA)
 workflow.run()
 ```
 
-> task-folderworkflow.py
+> dataflow-SCHEMA.py
 
 
 
-In this example define two tasks, Hemingway and Shakespeare. 
+This example defines two tasks, *Hemingway* and *Shakespeare*. 
 
-Shakespeare, for concatenate the result and create an output, takes the result of Hemingway at `workflow:///Hemingway/A.txt`, file define by Hemingway task. 
+*Shakespeare*, to concatenate the result and create an output, takes the result from *Hemingway* in `workflow:///Hemingway/A.txt`, file defined by the Hemingway task. 
 
-
-
-The output, saved in `B.txt` file, can be print after the workflow execution. 
+The output, stored in the file `B.txt`, can be printed after the execution of the workflow. 
 
 ```python
 if workflow.get_dry() is False:
@@ -379,11 +441,11 @@ exit(z)
 
 
 
-`sum_from_file.py` open two files, read file names passed by command line, read the numbers into files and sum them. 
+`sum_from_file.py` opens two files, reads filenames given on the command line, reads the numbers into files and sums them. 
 
 
 
-We can run a Python (or another language script) declare explicitly the bash command for running (and compiling). 
+We can run a Python (or other language) script by explicitly declaring the bash command for to execute (and compile). 
 
 ```python
 import json
@@ -420,15 +482,13 @@ if workflow.get_dry() is False:
         print(result)
 ```
 
-> task-sum.py
+> dataflow-sum.py
 
 
 
-*Hemingway* and *Shakespeare* prints two numbers, 10 and 7, and save them into `A.txt` and `B.txt` files.
+*Hemingway* and *Shakespeare* print two numbers, 10 and 7, and save them to files `A.txt` and `B.txt`.
 
-*Orwell* run `sum_from_file.py` and catch file name // and save the result into `C.txt`.
-
-
+*Orwell* runs `sum_from_file.py` and uses the workflow SCHEMA filenames and saves the result in `C.txt`.
 
 In the end `task-sum.py` print sum result. 
 
@@ -440,13 +500,13 @@ In the end `task-sum.py` print sum result.
 
 ## JSON
 
-DAGonStar can export and import JSON file, for //
+DAGonStar can export and import JSON files for saving and loading workflows without having to declare them in a program file. 
 
 
 
 ### Export JSON 
 
-After declaring the tasks and adding them to the workflow, you can export the graph's structure in JSON file with the command `workflow.as_json().`
+After declaring the tasks and adding them to the workflow, you can export the graph structure to a JSON file using the `workflow.as_json()` command.
 
 ```python
 json = workflow.as_json()
@@ -454,7 +514,7 @@ json = workflow.as_json()
 
 
 
-`workflow.as_json()` command saves workflow's name, task names, task types, commands and dependencies into a `json` variable.
+The `workflow.as_json()` command saves the workflow name, task names, task types, commands and dependencies to a `json` file.
 
 ```json
 {
@@ -504,7 +564,7 @@ json = workflow.as_json()
 
 
 
-With the command below you can export workflow's structure and tasks into a file. This allows you to import an entire workflow without having to declare the tasks again. 
+The command below allows you to export the structure and tasks of a workflow to a file. This allows you to import a complete workflow without having to declare the tasks again. 
 
 ```python
 with open('english-writers.json', 'w') as outfile:
@@ -535,13 +595,13 @@ workflow.load_json("english-writers.json")
 workflow.run()
 ```
 
-> task-loadJSON.py
+> dataflow-loadJSON.py
 
 
 
-`task-loadJSON.py` loads *english-writers.json*, the file that was previously generated by the export in the previous example. 
+`task-loadJSON.py` loads `english-writers.json`, the file created by the export in the previous example. 
 
-After the import, you can run the workflow without any other declaration. 
+After the import, you can run the workflow without any further declaration. 
 
 ```bash
 2024-11-07 11:19:57,839 root         DEBUG    Running workflow: English-Writers
@@ -566,13 +626,13 @@ After the import, you can run the workflow without any other declaration.
 2024-11-07 11:20:02,952 root         INFO     Workflow 'English-Writers' completed in 5.113301515579224 seconds
 ```
 
-> task-loadJSON.py execution 
+> dataflow-loadJSON.py execution 
 
 
 
 ## Multiple Workflows
 
-DAGonStar allows multiple workflows to split tasks, organize them, and manage their dependencies.
+DAGonStar allows multiple workflows to split tasks, organise them, and manage their dependencies.
 
 The declaration of workflows and tasks remains the same, but if you want to combine two or more workflows you can use `DAG_TPS()`.
 
@@ -580,16 +640,16 @@ The declaration of workflows and tasks remains the same, but if you want to comb
 metaWorkflow=DAG_TPS("WritersDAG")
 ```
 
-`DAG_TPS()` create a meta workflow, a workflow of workflows. 
+`DAG_TPS()` creates a meta workflow, a workflow of workflows. 
 
-With `add_workflow()` you can add workflows into `metaWorkflow`.
+With `add_workflow()` you can add workflows to the `metaWorkflow`.
 
 ```python
 metaWorkflow.add_workflow(workflow1)
 metaWorkflow.add_workflow(workflow2)
 ```
 
-Now we can treat metaWorkflow like a simple workflow. 
+Now we can treat metaWorkflow as a simple workflow. 
 
 ```python
 metaWorkflow.make_dependencies()
@@ -600,7 +660,7 @@ metaWorkflow.run()
 
 In `task-multiple-workflow.py` declare two workflows, *English-Writers* and *Italian-Writers*.
 
-*taskA* in *English-Writers* save a number into *A.txt*, *taskB* in *Italian-Writers* cat *A.txt* and put the number into *B.txt*.
+*Shakespeare* in *English-Writers* saves a number to `A.txt`, *Dante* in *Italian-Writers* cat `A.txt` and saves the number to `B.txt`.
 
 ```python
 import json
@@ -640,21 +700,21 @@ if workflow_eng.get_dry() is False and workflow_ita.get_dry() is False:
         print(result)
 ```
 
-> task-multiple-workflows.py
+> dataflow-multiplewf.py
 
 
 
-*Dante* can read the *Shakespeare* file result because he can access to *Shakespeare*'s folder result.
+*Dante* can read the *Shakespeare* file result because it can access to the *Shakespeare*'s folder result.
 
-*Dante* can read *A.txt* with the command *workflow://English-Writers/Shakespeare/A.txt*, where *English-Writers* is the name of the workflow, *Shakespeare* is the name of the task and *A.txt* is the file generated as output.
+*Dante* can read `A.txt` with the command `workflow://English-Writers/Shakespeare/A.txt`, where *English-Writers* is the name of the workflow, *Shakespeare* is the name of the task and `A.txt` is the file generated as output.
 
 
 
-### task-sum-multiple-workflows
+### dataflow-multiplewfsum
 
-In this example, we want to declare three workflows. Two workflows return a number, the third one takes the output numbers and adds them together.
+In this example we want to define three workflows. Two of the workflows return a number, while the third takes these output numbers and adds them up.
 
-We declare the *English-Writers* workflow, which performs the same operations declared in *task-sum.py*.
+We declare the *English-Writers* workflow, which performs the same operations as declared in `dataflow-sum.py`.
 
 
 
@@ -664,7 +724,7 @@ The *Italian-Writers* workflow contains a single task, *Dante*.
 taskD = DagonTask(TaskType.BATCH, "Dante", "gcc /path/to/file/random_number.c -o random_number; ./random_number > D.txt")
 ```
 
-This task compiles and executes a .c file, which generates a random number from 1 to 99. 
+This task compiles and runs a .c file that generates a random number from 1 to 99. 
 
 ```c
 #include <stdio.h>
@@ -680,19 +740,19 @@ int main() {
 
 > random_number.c
 
-The result is exported into *D.txt* file. 
+The result is exported into `D.txt` file. 
 
 
 
-The *French-Writers* workflow contains a task named *Perec*. 
+The *French-Writers* workflow contains a task called *Perec*. 
 
 ```python
 taskE = DagonTask(TaskType.BATCH, "Perec", "rustc /path/to/file/sum_rust.rc; ./sum_rust workflow://English-Writers/Orwell/C.txt workflow://Italian-Writers/Dante/D.txt > E.txt")
 ```
 
-This task compiles *sum_rust.rc* and executes it by passing the filenames `workflow://English-Writers/Orwell/C.txt` and `workflow://Italian-Writers/Dante/D.txt`, which contain the results of the *English-Writers* and *Italian-Writers* executions, via the command line.
+This task compiles `sum_rust.rc` and runs it by passing the filenames `workflow://English-Writers/Orwell/C.txt` and `workflow://Italian-Writers/Dante/D.txt`, which contain the results of the *English-Writers* and *Italian-Writers* executions, on the command line.
 
-*sum_rust.rc* reads numbers from the files and sums them. 
+`sum_rust.rc` reads numbers from the files and sums them. 
 
 ```rust
 use std::env;
@@ -738,17 +798,7 @@ where
 
 
 
-The result of the execution is three numbers: the first and second are the result of a sum in *English-Writers* and a random number in *Italian-Writers*. The third is the sum of these two numbers.
-
-```bash
-['17\n']
-['4']
-['21\n']
-```
-
-
-
-*task-sum-multiple-workflows.py*  //
+*dataflow-multiplewfsum.py* defines 3 workflows and manages the execution and dependencies between 5 tasks. 
 
 ```python
 import json
@@ -813,15 +863,25 @@ if workflow.get_dry() is False:
     
 ```
 
-> task-sum-multiple-workflows.py
+> dataflow-multiplewfsum.py
+
+
+
+The result of the execution is three numbers: the first and second are the result of a sum in *English-Writers* and a random number in *Italian-Writers*. The third is the sum of these two numbers.
+
+```bash
+['17\n']
+['4']
+['21\n']
+```
 
 
 
 ## Checkpoint
 
-DAGonStar has an internal checkpoint system, but it also provides the possibility to declare an external checkpoint if you want to explicitly check the existence of the task's result file (and his correct execution).
+DAGonStar has an internal checkpoint system, but it also offers the possibility to declare an external checkpoint if you want to explicitly check the existence of the result file of the task (and its correct execution).
 
-To declare an explicit checkpoint, you must declare with `TaskType.CHECKPOINT`.
+To declare an explicit checkpoint, you must declare it with `TaskType.CHECKPOINT`.
 
 ```python
 taskCheck = DagonTask(TaskType.CHECKPOINT, "Checkpoint", "workflow:///Task_Name/output_file")
@@ -839,15 +899,15 @@ task = DagonTask(TaskType.BATCH, "Task", "cat workflow:///Svevo/Italian-Writers/
 
 In this example *Svevo* is the name of the checkpoint, *Italian-Writers* is the name of the workflow and *Pirandello* is the name of the task. 
 
-It is still possible to refer to the original output file of the task after the checkpoint execution.
+It is still possible to refer to the original output file of the task after the checkpoint has been executed.
 
 
 
-### task-checkpoint
+### dataflow-checkpoint
 
 In this example, we declare a new C program called `output-random-file.c`. 
 
-This code generates a random number from 1 to 100 and saves it into a file called `output-file.txt`.
+This code generates a random number from 1 to 100 and saves it in a file called `output-file.txt`.
 
 ```c
 #include <stdio.h>
@@ -891,11 +951,11 @@ print(math.pow(int(x.read()), 2))
 
 
 
-In `task-checkpoint.py` declare three tasks. 
+In `dataflow-checkpoint.py` declare three tasks. 
 
 1. *Pirandello*: Compiles and runs `output-random-file.c`, which produces a file with a random number. 
-2. *Svevo:* An explicit checkpoint task that backs up `output-random-file.txt`, the result from `output-random-file.c` and saves it into an equivalent file.   
-3. *Calvino*: Takes the result file of *Pirandello* from the *Svevo* checkpoint and processes it with *pow2.py*.
+2. *Svevo:* An explicit checkpoint task that backs up `output-random-file.txt`, the result of `output-random-file.c` and saves it to an equivalent file.   
+3. *Calvino*: Takes the result file from *Pirandello* from the *Svevo* checkpoint and processes it with *pow2.py*.
 
 
 
@@ -944,7 +1004,7 @@ if workflow.get_dry() is False:
             print(result)
 ```
 
-> task-checkpoint.py
+> dataflow-checkpoint.py
 
 
 
@@ -959,17 +1019,17 @@ if workflow.get_dry() is False:
 
 ## Transversal Workflow
 
-Dagon has the property of transversality, allowing you to create dependencies in workflows on existing workflows, whether they are currently executing or have already ended. This property also allows you to build workflows from workflows for joint execution.
+Dagon has the property of transversality, which allows you to create dependencies in workflows on existing workflows, whether they are currently running or have already finished. This property also allows you to build workflows from workflows for joint execution.
 
 
 
 ### Requirements
 
-To use the transversality property of DagOnStar, it is necessary to use [DagOnService](https://github.com/DagOnStar/DagOnService/).
+To use the transversality feature of DAGonStar, it is necessary to use [DagOnService](https://github.com/DagOnStar/DagOnService/).
 
-DagOnService is an advanced solution for workflow registration and remote monitoring, designed to operate on Docker. To utilize this service, it needs to be run within a Docker container using Docker-compose.
+DagOnService is an advanced workflow registration and remote monitoring solution designed to run on Docker. To use this service, it must to be run inside a Docker container using Docker-compose.
 
-To run the service, execute the following command in the root folder:
+To run the service, run the following command in the root folder:
 
 ```bash
 docker-compose up --build 
@@ -977,7 +1037,7 @@ docker-compose up --build
 
 
 
-After executing the launch command, you can verify the status of the code by using the check command: 
+After running the launch command, you can check the status of the code by using the check command: 
 
 ```bash
 http://localhost:57000/check
@@ -991,13 +1051,11 @@ http://localhost:57000/check
 
 
 
-### dagon.ini
+#### dagon.ini
 
-The `dagon.ini` file serves as the primary configuration file for DagOnStar.
+The `dagon.ini` file as the primary configuration file for DAGonStar.
 
-
-
-To utilize DagOnService, open the `dagon.ini` file and, in the dagon_service section, enter the IP address (or DNS name) of the host computer where the DagOn service is running and set the use parameter to True.
+To use DagOnService, open the `dagon.ini` file and, in the [dagon_service] section, enter the IP address (or DNS name) of the host computer where the DagOnService is running and set the use parameter to True.
 
 ```ini
 [dagon_service]
@@ -1054,9 +1112,11 @@ args=(sys.stderr,)
 format=%(asctime)s %(name)-12s %(levelname)-8s %(message)s
 ```
 
+> dagon.ini example
 
 
-If DagOnService and `dagon.ini` configured properly, there should be a workflow registration message before a workflow is executed.
+
+If DagOnService and `dagon.ini` are configured correctly, there should be a workflow registration message before a workflow is executed.
 
 ```shell
 2025-01-07 11:42:33,703 root         DEBUG    Workflow registration success id = 677d051947f7f78657b0582a
@@ -1064,17 +1124,17 @@ If DagOnService and `dagon.ini` configured properly, there should be a workflow 
 
 
 
-It's recommended to set `remove_dir`, under batch section, to `False`. 
+It's recommended to set `remove_dir` to `False` in the batch section.
 
-If preferred, you can change the default `scratch_dir_base` to another directory, such as `/home/$USER/DagOnStar/tmp/`. This is the directory where all the results will be stored.
+If you prefer, you can change the default `scratch_dir_base` to another directory, such as `/home/$USER/DAGonStar/tmp/`. This is the directory where all the results are stored.
 
 
 
-### DagOnService 
+#### DagOnService 
 
-DagOnService offers multiple commands that allow you to view, manage, and delete workflows.
+DagOnService offers several commands that allow you to view, manage, and delete workflows.
 
-Using the list command, you can view all workflows that have been executed and registered within DagOnService:
+The `list` command allows you to view all workflows that have been executed and registered within DagOnService:
 
 ```bash
 http://localhost:57000/list
@@ -1124,11 +1184,11 @@ http://localhost:57000/list
 ]
 ```
 
-> Results from the list command following the execution of task-demo.py
+> Results of the list command after running taskflow-demo.py
 
 
 
-To view the tasks of a specific workflow, you can use the address service command followed by the workflow ID.
+To view the tasks of a particular workflow, you can use the address service command followed by the workflow ID.
 
 ```bash
 http://localhost:57000/<workflow_id>
@@ -1146,15 +1206,15 @@ http://localhost:57000/delete/<workflow_id>
 
 ### Asynchronous dependency
 
-Once everything is set up correctly, you can take advantage of DagOnStar's transversality.
+Once everything is set up correctly, you can take advantage of DAGonStar's transversality.
 
-With DagOnService, you can initiate a workflow and, upon its completion, start another workflow that requires data from the previous one.
+With DagOnService, you can start a workflow and, when it is completed, start another workflow that requires data from the previous one.
 
 
 
 #### WF-pow.py
 
-`WF1-pow.py` obtain a number and produce it as output.
+`WF1-pow.py` gets a number and produces it as output.
 
 ```python
 import json
@@ -1187,7 +1247,7 @@ workflowI.run()
 
 `Italian-Writers` is registered in the DagOnService and can be consulted by other workflows. To test this, we can run a second workflow with a dependency on the first.
 
-`WF2-pow.py` take the output number from `WF1-pow.py` as input and raise it to a power.
+`WF2-pow.py` takes the output number from `WF1-pow.py` as input and raises it to a power.
 
 ```python
 import json
@@ -1228,7 +1288,7 @@ if workflowE.get_dry() is False:
 
 
 
-It's mandatory, in the workflow that have requirements from another workflow, use the instruction `make_dependencies()`.
+It's mandatory to use `make_dependencies()` command in the workflow that has dependencies from another workflow.
 
 
 
@@ -1236,7 +1296,7 @@ It's mandatory, in the workflow that have requirements from another workflow, us
 
 In the previous example, `WF1-pow.py` and `WF2-pow.py` run asynchronously, but with DagOnService support, a workflow can retrieve a task from another workflow at runtime and wait for it to complete.
 
-In the `WF1-pow.py` example above, add a pause to the Pirandello task declaration. With this change, the Pirandello task will complete its execution after about 30 seconds.
+In the `WF1-pow.py` example above, add a pause to the *Pirandello* task declaration. With this change, the Pirandello task will complete its execution after 30 seconds.
 
 ```python
 taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1.txt; sleep 30")	
@@ -1246,7 +1306,7 @@ taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1
 
 While the previous workflow is still running, run the ``WF2-pow.py`` file.
 
-Woolf task that has dependency from Pirandello task in WF1-, waiting for its completion.
+The *Woolf* task, which has dependency on the Pirandello task in `WF1-pow.py`, waits for its completion.
 
 ```python
 2025-01-16 10:27:00,856 root         DEBUG    Woolf: Status.WAITING
@@ -1262,7 +1322,7 @@ Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `
 2025-01-16 10:27:08,886 root         INFO     Workflow 'Italian-Writers' completed in 34.78531789779663 seconds ---
 ```
 
-> WF1-pow.py ending status
+> WF1-pow.py end status
 
 
 
@@ -1272,23 +1332,21 @@ Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `
 2025-01-16 10:27:11,590 root         INFO     Workflow 'English-Writers' completed in 30.706148386001587 seconds --- 
 ```
 
-> WF2-pow.py ending status
+> WF2-pow.py end status
 
 
 
 ## Connection
 
-Dagonstar gives the ability to perform tasks on a remote machine using different technologies. 
-
-//
-
-
+DAGonStar gives the ability to perform tasks on a remote machine using different technologies. 
 
 
 
 ### SSH 
 
-//
+DAGonStar allows you to perform tasks via SSH, using remote machines to execute and complete tasks.
+
+
 
 #### Pre-configuration
 
@@ -1352,7 +1410,7 @@ After declaring the instructions add a three new parameters: `ip` is the ip of t
 ### Cloud Task
 
 
-DagOnStar supports the deployments on the following Cloud Providers:
+DAGonStar supports the deployments on the following Cloud Providers:
 
 
 * Google Cloud
@@ -1399,7 +1457,7 @@ The ID of the image is available under the name of the AMI.
 The ```size``` value refers to the instance type of your virtual machine. A complete list of instance types can be found at  [https://aws.amazon.com/ec2/instance-types/](https://aws.amazon.com/ec2/instance-types/).
 
 
-Next, we need to specify the SSH parameters to enable the communication between the DagOnStar engine and the virtual machines. You can create a new SSH key or choose an existing one, previously loaded on the platform of your cloud provider's platform.
+Next, we need to specify the SSH parameters to enable the communication between the DAGonStar engine and the virtual machines. You can create a new SSH key or choose an existing one, previously loaded on the platform of your cloud provider's platform.
 
 To create a new key, declare a dictionary as follows:
 
@@ -1432,7 +1490,7 @@ To use an existing key already added to EC2, you must declare a dictionary as fo
 ssh_key_ec2_taskA = {"option": cm.KeyOptions.GET, "key_path": "/path/to/key.pem", "cloud_args": {"name": "dagon_services"}}
 ```
 
-Then, you must declare the DagOnStar tasks using ```TaskType.CLOUD``` and pass the argument the ```instance flavour``` and ```key configuration``` dictionaries as arguments. 
+Then, you must declare the DAGonStar tasks using ```TaskType.CLOUD``` and pass the argument the ```instance flavour``` and ```key configuration``` dictionaries as arguments. 
 
 
 
@@ -1445,22 +1503,22 @@ taskA = DagonTask(TaskType.CLOUD, "A", "mkdir output;echo I am A > output/f1.txt
 
 
 
-`dataflow-demo-cloud.py` have 2 tasks, `taskA` and `taskB`. During the execution of the script, two instances will be created on EC2. Note that these instances will be created using the default security group. You must configure it to enable access through SSH, which is the protocol used by DagOnStar to execute remote tasks.
+`dataflow-demo-cloud.py` have 2 tasks, `taskA` and `taskB`. During the execution of the script, two instances will be created on EC2. Note that these instances will be created using the default security group. You must configure it to enable access through SSH, which is the protocol used by DAGonStar to execute remote tasks.
 
 
 > [!WARNING]
-> We are working on a bug preventing DagOnStar from stopping instances. Please, remember to manually stop or terminate your instances after retrieving your data.
+> We are working on a bug preventing DAGonStar from stopping instances. Please, remember to manually stop or terminate your instances after retrieving your data.
 
 
 > [!WARNING]
-> Data are not automatically downloaded to the DagOnStart main host. Please, remember to retrieve your data after the execution of the workflow is completed.
+> Data are not automatically downloaded to the DAGonStar main host. Please, remember to retrieve your data after the execution of the workflow is completed.
 
 
 
 
 ### Slurm
 
-DagOnStar supports task deployment through SLURM, an open source cluster resource management and job scheduling system.
+DAGonStar supports task deployment through SLURM, an open source cluster resource management and job scheduling system.
 
 
 
@@ -1496,7 +1554,7 @@ taskA = DagonTask(TaskType.SLURM, "A", "mkdir output; hostname > output/f1.txt",
 
 ### Docker
 
-DagOnStar supports task deployment through Docker, a platform designed to help developers build, share, and run container applications. 
+DAGonStar supports task deployment through Docker, a platform designed to help developers build, share, and run container applications. 
 
 
 
@@ -1549,8 +1607,8 @@ In the task declaration you can declare a `remove` option. With this option, whe
 > [!NOTE]
 > By default, each containers is deployed with a volume to the scratch directory of the tasks. So, you can access this directory to see the results of a task.
 
-> [WARNING]
-> We are working on a bug that prevents DagOnStar from allowing communication between tasks, preventing the exchange of files. 
+> [!WARNING]
+> We are working on a bug that prevents DAGonStar from allowing communication between tasks, preventing the exchange of files. 
 
 
 
@@ -1562,3 +1620,8 @@ After the pre-configuration, a SLURM-remote task can be declared. For each task,
 taskA = DagonTask(TaskType.DOCKER, "A", "echo $RANDOM > output.txt", image="ubuntu:latest", ip="", ssh_username="")
 ```
 
+
+
+### Globus
+
+For Globus configuration see the `README.md` file into `/examples/dataflow/globus`.
