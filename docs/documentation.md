@@ -509,12 +509,12 @@ DAGonStar can export and import JSON files for saving and loading workflows with
 After declaring the tasks and adding them to the workflow, you can export the graph structure to a JSON file using the `workflow.as_json()` command.
 
 ```python
-json = workflow.as_json()
+json_Workflow = workflow.as_json()
 ```
 
 
 
-The `workflow.as_json()` command saves the workflow name, task names, task types, commands and dependencies to a `json` file.
+The `workflow.as_json()` command saves the workflow name, task names, task types, commands and dependencies to a `json` variable.
 
 ```json
 {
@@ -568,7 +568,7 @@ The command below allows you to export the structure and tasks of a workflow to 
 
 ```python
 with open('english-writers.json', 'w') as outfile:
-    stringWorkflow = json.dumps(jsonWorkflow, sort_keys=True, indent=2)
+    stringWorkflow = json.dumps(json_Workflow, sort_keys=True, indent=2)
     outfile.write(stringWorkflow)
 ```
 
