@@ -1212,9 +1212,9 @@ With DagOnService, you can start a workflow and, when it is completed, start ano
 
 
 
-#### WF-pow.py
+#### dataflow-wf-pow
 
-`WF1-pow.py` gets a number and produces it as output.
+`dataflow-wf1-pow.py` gets a number and produces it as output.
 
 ```python
 import json
@@ -1241,13 +1241,13 @@ workflowI.make_dependencies()
 workflowI.run()
 ```
 
-> WF1-pow.py
+> dataflow-wf1-pow.py
 
 
 
 `Italian-Writers` is registered in the DagOnService and can be consulted by other workflows. To test this, we can run a second workflow with a dependency on the first.
 
-`WF2-pow.py` takes the output number from `WF1-pow.py` as input and raises it to a power.
+`dataflow-wf2-pow.py` takes the output number from `dataflow-wf1-pow.py` as input and raises it to a power.
 
 ```python
 import json
@@ -1265,7 +1265,7 @@ workflowE.set_dry(False)
     
 taskB = DagonTask(TaskType.BATCH, "Woolf", "python3 /path/to/file/pow2.py workflow://Italian-Writers/Pirandello/output/f1.txt >> f2.txt")
 
-workflowE.add_task(task)
+workflowE.add_task(taskB)
 
 workflowE.make_dependencies()
 
@@ -1284,7 +1284,7 @@ if workflowE.get_dry() is False:
 
 ```
 
-> WF2-pow.py
+> dataflow-wf2-pow.py
 
 
 
@@ -1294,9 +1294,9 @@ It's mandatory to use `make_dependencies()` command in the workflow that has dep
 
 #### Run-time dependency 
 
-In the previous example, `WF1-pow.py` and `WF2-pow.py` run asynchronously, but with DagOnService support, a workflow can retrieve a task from another workflow at runtime and wait for it to complete.
+In the previous example, `dataflow-wf1-pow.py` and `dataflow-wf2-pow.py` run asynchronously, but with DagOnService support, a workflow can retrieve a task from another workflow at runtime and wait for it to complete.
 
-In the `WF1-pow.py` example above, add a pause to the *Pirandello* task declaration. With this change, the Pirandello task will complete its execution after 30 seconds.
+In the `dataflow-wf1-pow.py` example above, add a pause to the *Pirandello* task declaration. With this change, the Pirandello task will complete its execution after 30 seconds.
 
 ```python
 taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1.txt; sleep 30")	
@@ -1306,7 +1306,7 @@ taskA = DagonTask(TaskType.BATCH, "Pirandello", "mkdir output;echo 7 > output/f1
 
 While the previous workflow is still running, run the ``WF2-pow.py`` file.
 
-The *Woolf* task, which has dependency on the Pirandello task in `WF1-pow.py`, waits for its completion.
+The *Woolf* task, which has dependency on the Pirandello task in `dataflow-wf1-pow.py`, waits for its completion.
 
 ```python
 2025-01-16 10:27:00,856 root         DEBUG    Woolf: Status.WAITING
@@ -1314,7 +1314,7 @@ The *Woolf* task, which has dependency on the Pirandello task in `WF1-pow.py`, w
 
 
 
-Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `WF2-pow-wait.py` workflow will continue its execution.
+Once the Pirandello tasks of the `dataflow-wf1-pow.py` workflow have finished, the `WF2-pow-wait.py` workflow will continue its execution.
 
 ```bash
 2025-01-16 10:27:06,875 root         DEBUG    Pirandello Completed in 31.989572048187256 seconds ---
@@ -1322,7 +1322,7 @@ Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `
 2025-01-16 10:27:08,886 root         INFO     Workflow 'Italian-Writers' completed in 34.78531789779663 seconds ---
 ```
 
-> WF1-pow.py end status
+> dataflow-wf1-pow.py end status
 
 
 
@@ -1332,7 +1332,7 @@ Once the Pirandello tasks of the `WF1-pow-wait.py` workflow have finished, the `
 2025-01-16 10:27:11,590 root         INFO     Workflow 'English-Writers' completed in 30.706148386001587 seconds --- 
 ```
 
-> WF2-pow.py end status
+> dataflow-wf2-pow.py end status
 
 
 
