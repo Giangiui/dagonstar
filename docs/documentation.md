@@ -422,7 +422,7 @@ This is the result.
 
 
 
-### dataflow-sum.py
+### dataflow-sum
 
 Now we want to run this simple Python code. 
 
@@ -798,7 +798,7 @@ where
 
 
 
-*dataflow-multiplewfsum.py* defines 3 workflows and manages the execution and dependencies between 5 tasks. 
+`dataflow-multiplewfsum.py` defines 3 workflows and manages the execution and dependencies between 5 tasks. 
 
 ```python
 import json
