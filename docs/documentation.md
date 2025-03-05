@@ -658,7 +658,7 @@ metaWorkflow.run()
 
 
 
-In `task-multiple-workflow.py` declare two workflows, *English-Writers* and *Italian-Writers*.
+In `dataflow-multiplewf.py` declare two workflows, *English-Writers* and *Italian-Writers*.
 
 *Shakespeare* in *English-Writers* saves a number to `A.txt`, *Dante* in *Italian-Writers* cat `A.txt` and saves the number to `B.txt`.
 
