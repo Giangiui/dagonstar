@@ -422,7 +422,7 @@ This is the result.
 
 
 
-### sum.py
+### dataflow-sum.py
 
 Now we want to run this simple Python code. 
 
@@ -490,7 +490,7 @@ if workflow.get_dry() is False:
 
 *Orwell* runs `sum_from_file.py` and uses the workflow SCHEMA filenames and saves the result in `C.txt`.
 
-In the end `task-sum.py` print sum result. 
+In the end `dataflow-sum.py` print sum result. 
 
 ```bash
 ['17\n']
