@@ -1386,7 +1386,7 @@ DAGonStar allows you to perform tasks via SSH, using remote machines to execute 
 
    
 
-#### SSH Task
+#### Remote Task
 
 After preconfiguration, you can add a task to the workflow that can access the remote machine. 
 
@@ -1404,6 +1404,24 @@ After declaring the instructions add a three new parameters: `ip` is the ip of t
 
 > [!WARNING]
 > By now, the stager only supports the movement of data between remote machines or from a remote machine to a local machine. We are working on enable the stage in of data from a remote machine to a local machine.
+
+
+
+#### Remote CheckPoint
+
+As with SSH Task, you can add a checkpoint to the workflow that can be accessed on a remote machine.
+
+After pre-configuration, you can add a remote checkpoint as with SSH Task.
+
+```python
+taskA = DagonTask(TaskType.BATCH, "A", "mkdir output;hostname > output/f1.txt", ip="", ssh_username="")
+```
+
+
+
+> [!WARNING]
+>
+> This functionality is in alpha stage and may not work properly.
 
 
 
