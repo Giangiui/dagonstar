@@ -146,6 +146,7 @@ class Task(Thread):
         self.stager_mover = None
         self.mode = "sequential"
         self.globusendpoint = globusendpoint
+        self.new_tasks = []
 
     def get_endpoint(self):
         return self.globusendpoint
@@ -447,13 +448,16 @@ class Task(Thread):
                 # Add the reference from the task
                 task.increment_reference_count()
 
+                # TODO: check this code
+                """
                 if self.mode == "parallel":
                     for next_task in self.nexts:
                         if self in next_task.prevs:
                             next_task.prevs.remove(self)
                         
-                        for new_task in new_tasks:
+                        for new_task in self.new_tasks:
                             next_task.add_dependency_to(new_task)
+                """
 
             if task is None:  # if is None means that task is from another WF maybe in the dagon service
                 #self.workflow.logger.debug("Adding transversal point")
@@ -552,7 +556,7 @@ class Task(Thread):
             task_name = elements[1]
 
             # Get the rest of the string as local path
-            local_path = arg.replace(workflow_name + "/" + task_name, "")
+            local_path = "/" + "/".join(elements[2:])
 
             # Set the default workflow name if needed
             if workflow_name is None or workflow_name == "":
@@ -604,7 +608,6 @@ class Task(Thread):
                 if self.mode == "parallel":
                     files = glob.glob(task.get_scratch_dir() + "/" + local_path)
                     taskType = TaskType[type(self).__name__.upper()]
-                    new_tasks = []
 
                     for file in files:
                         filename, _ = path.splitext(path.basename(file))
@@ -647,13 +650,13 @@ class Task(Thread):
                                                       transversal_workflow=self.transversal_workflow)
                         
                         self.workflow.add_task(parallel_task)
-                        new_tasks.append(parallel_task)
+                        self.new_tasks.append(parallel_task)
 
                     for next_task in self.nexts:
                         if self in next_task.prevs:
                             next_task.prevs.remove(self)
 
-                        for new_task in new_tasks:
+                        for new_task in self.new_tasks:
                             next_task.add_dependency_to(new_task)
                     
                     self.workflow.make_dependencies()
